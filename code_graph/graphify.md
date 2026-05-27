@@ -1,382 +1,400 @@
-# Graphify 用法（AI 知识图谱 Skill）
+# Graphify 用法整理
 
-[Graphify](https://graphify.net/) 是面向 AI 编程助手的开源 **Skill**，把代码、文档、论文、图片、音视频等整包材料建成**可查询知识图谱**（Tree-sitter AST + LLM 语义抽取 + Leiden 社区聚类）。  
-与 AiBasic 已落地的 [code-review-graph](code_review_graph.md) 互补：后者偏 **Review / 调用链 / MCP**；Graphify 偏 **多模态语料 + 概念关联 + 交互可视化**。
+[Graphify](https://graphify.net/) 是面向 AI 编程助手的知识图谱工具。它把一个仓库里的代码、Markdown、PDF、图片、音视频等材料转换为 `graphify-out/` 下的可查询图谱，核心流程是：
 
-工具生态对比见：[code_knowledge_graph_tools.md](code_knowledge_graph_tools.md)。
+1. **AST 提取**：本地 Tree-sitter 解析代码结构。
+2. **语义提取**：用 LLM 从文档、图片、论文等非结构化材料中抽取概念和关系。
+3. **图谱生成**：合并两阶段结果，做社区聚类，生成 `graph.json`、`graph.html` 和报告。
 
----
-
-## 定位对比（本仓库语境）
-
-| 维度 | code-review-graph | Graphify |
-|------|-------------------|----------|
-| 主要输入 | 源代码（19+ 语言） | 代码 + Markdown/PDF/图片/视频等 |
-| 抽取方式 | Tree-sitter AST，确定性边 | AST（代码）+ LLM（文档/语义边） |
-| 存储 | `django_learn_demo/.code-review-graph/graph.db` | `django_learn_demo/graphify-out/graph.json` |
-| IDE 集成 | MCP（`.cursor/mcp.json`） | Skill（`/graphify`）+ 可选 MCP |
-| 典型问题 | 「谁调用了 X？」「改动影响面？」 | 「Auth 和 Database 如何关联？」「设计 rationale 在哪？」 |
-| AiBasic 现状 | 已配置 `django_learn_demo` | 已生成 `django_learn_demo/graphify-out/`（与 CRG 可并存） |
-
----
-
-## 环境要求
-
-| 项 | 要求 |
-|----|------|
-| Python | 3.10+ |
-| 包管理（推荐） | [uv](https://github.com/astral-sh/uv) 或 pipx |
-| PyPI 包名 | **`graphifyy`**（双 y；CLI 命令仍为 `graphify`） |
-| 语义抽取（可选） | 设置 `GEMINI_API_KEY` / `GOOGLE_API_KEY` 并安装 `graphifyy[gemini]` 或 `openai`；否则 headless 下文档语义边可能缺失，代码 AST 仍可用 |
-
-> 其他 PyPI 上的 `graphify*` 包与官方无关，请只安装 `graphifyy`。
+本文只用一个仓库做示例：`D:\kan\kan\Python\knowledge_engineering`。
 
 ---
 
 ## 安装
 
-### 1. 安装 CLI
-
-**本仓库推荐**：装入 `django_learn_demo/.venv`（与 code-review-graph 共用子项目 venv）：
-
-```bash
-cd django_learn_demo
-python -m venv .venv
-.venv/Scripts/pip install graphifyy          # Windows
-# source .venv/bin/activate && pip install graphifyy   # Linux/macOS
-```
-
-全局安装（任意目录可用 `graphify` 命令）：
+PyPI 包名是 **`graphifyy`**，安装后命令名是 `graphify`。
 
 ```powershell
-uv tool install graphifyy    # 推荐，自动加入 PATH
+cd D:\kan\kan\Python\knowledge_engineering
+python -m venv .venv
+.\.venv\Scripts\pip install graphifyy
+.\.venv\Scripts\python -m graphify --help
+```
+
+也可以全局安装：
+
+```powershell
+uv tool install graphifyy
+# 或
 pipx install graphifyy
 ```
 
-验证：
-
-```powershell
-graphify --version           # 例：graphify 0.8.14
-# venv 内未加入 PATH 时：
-python -m graphify --help
-```
-
-### 2. 注册到 Cursor
-
-在**项目根**（AiBasic）或子项目内执行：
-
-```powershell
-graphify cursor install
-```
-
-会在项目中写入 `.cursor/rules/graphify.mdc`，使助手在存在 `graphify-out/` 时优先用图谱查询，而不是整仓 Grep。
-
-卸载：
-
-```powershell
-graphify cursor uninstall
-graphify uninstall          # 所有平台
-graphify uninstall --purge  # 并删除 graphify-out/
-```
-
-### 3. 可选能力包
-
-按需安装，避免默认装全量依赖：
+可选能力按需安装：
 
 ```powershell
 pip install "graphifyy[pdf]"      # PDF
 pip install "graphifyy[office]"   # docx / xlsx
-pip install "graphifyy[video]"    # 音视频转写（Whisper）
-pip install "graphifyy[gemini]"   # Gemini API 语义抽取
+pip install "graphifyy[video]"    # 音视频转写
 pip install "graphifyy[mcp]"      # MCP stdio 服务
-pip install "graphifyy[neo4j]"    # 推送到 Neo4j
-pip install "graphifyy[all]"      # 全部
+pip install "graphifyy[neo4j]"    # Neo4j 导出 / 推送
+pip install "graphifyy[all]"      # 全部可选能力
 ```
 
 ---
 
-## 本仓库实例（django_learn_demo）
+## 两阶段提取
 
-图谱范围：**仅** `django_learn_demo/`（与 code-review-graph 相同子项目，输出目录互不覆盖）。
+### 关系总览
 
-### 全量建图（headless，已验证 graphifyy 0.8.14）
-
-```bash
-cd django_learn_demo
-
-# 1. 安装（若尚未安装）
-.venv/Scripts/pip install graphifyy
-
-# 2. AST + 语义抽取（无 API Key 时仍写出代码 AST 图；文档语义块会告警并跳过）
-.venv/Scripts/python.exe -m graphify extract . --out .
-
-# 3. 若需单独重算聚类 / 补全 graph.html、GRAPH_REPORT.md
-.venv/Scripts/python.exe -m graphify cluster-only .
-```
-
-**当前产出（2026-05-22）**：105 节点 · 134 边 · 20 社区；扫描 30 个代码文件 + 7 个文档。  
-核心 hub 示例：`CookieJWTCSRFTests`、`CookieJWTAuthentication`、`Note`（详见 `graphify-out/GRAPH_REPORT.md`）。
-
-打开可视化（用系统浏览器，勿用 Cursor 窄条 Simple Browser）：
+AST 提取和语义提取是同一条建图流水线中的两个互补阶段：前者负责代码里的确定性结构，后者负责文档、图片、PDF 等材料中的概念关系。两部分结果最终会合并为同一张图谱。
 
 ```text
-file:///…/django_learn_demo/graphify-out/graph.html
+代码文件
+  -> AST 提取
+  -> 确定性结构图：类、函数、调用、import
+
+文档 / 图片 / PDF / 说明材料
+  -> 语义提取
+  -> 概念图：设计意图、业务概念、架构关系
+
+AST 图 + 语义图
+  -> 合并
+  -> 聚类 / 可视化 / 查询图谱
 ```
 
-### 增量更新（改代码后，无 API 费用）
+`graphify .` 是统一建图入口，不是“AST 提取”和“语义提取”各自一条独立命令。执行时 Graphify 会扫描文件并按流水线处理：代码文件走 AST 提取，文档、图片、PDF 等材料尝试走语义提取，然后把成功得到的结果合并成图谱。
 
-```bash
-cd django_learn_demo
-.venv/Scripts/python.exe -m graphify update .
-# 大改后若节点数异常变少，可加 --force
-```
+API 只影响语义提取阶段能否补全：没有 API 或助手模型能力时，AST 提取仍会执行，代码结构图仍可生成；语义提取可能跳过、失败或只产生较少结果，并给出相关警告。
 
-### CLI 查询（不经过 Cursor Skill）
+### 1. AST 提取：代码结构，本地完成
 
-```bash
-cd django_learn_demo
-.venv/Scripts/python.exe -m graphify query "Cookie JWT 和 CSRF 如何关联？" --budget 1500
-.venv/Scripts/python.exe -m graphify path "CookieLogoutView" "csrf_init"
-.venv/Scripts/python.exe -m graphify explain "CookieJWTAuthentication"
-```
+AST 提取用于代码文件，例如 `.py`、`.js`、`.ts`、`.go`、`.java`、`.rs` 等。Graphify 会用 Tree-sitter 在本机解析：
 
-### 补全文档语义边（可选）
+- 模块、类、函数、方法等结构节点
+- import / dependency 边
+- 调用关系边
+- docstring 和 `NOTE`、`IMPORTANT`、`WHY` 等 rationale 注释
 
-headless 语义抽取需 API 客户端；未安装时会出现 `requires the openai package` 告警，**不影响代码 AST 图**：
+这一阶段的特点：
+
+- **不需要 API Key**
+- **不调用外部模型**
+- **源码不离开本机**
+- 输出关系通常标记为 `EXTRACTED`，表示来自源码中的确定事实
+
+命令行执行：
 
 ```powershell
-cd django_learn_demo
-.venv/Scripts/pip install openai          # 或 graphifyy[gemini]
-$env:GEMINI_API_KEY = "your-key"
-.venv/Scripts/python.exe -m graphify extract . --out . --backend gemini
+cd D:\kan\kan\Python\knowledge_engineering
+.\.venv\Scripts\python -m graphify .
 ```
 
-`graph.json` 可提交 git（与 `graph.db` 类似）；`graphify-out/cache/` 为本地缓存，通常不必提交。
+如果 `graphify` 已在 PATH 中：
 
----
+```powershell
+cd D:\kan\kan\Python\knowledge_engineering
+graphify .
+```
 
-## 在 Cursor 中使用
-
-### 构建图谱（Skill 主路径）
-
-在 Cursor 对话中输入（对**当前工作区目录**建图）：
+在 Cursor 聊天中执行同一件事：
 
 ```text
 /graphify .
 ```
 
-对指定子目录（例如只建 `django_learn_demo`）：
+注意：`/graphify` 是 Cursor / AI 助手里的 slash command；PowerShell 终端里不要写前导 `/`，终端应使用 `graphify .` 或 `python -m graphify .`。
 
-```text
-/graphify django_learn_demo
-```
+### 2. 语义提取：文档 / 图片 / 论文等，需要模型
 
-从 GitHub 克隆后建图：
+语义提取用于非结构化或弱结构化材料，例如：
 
-```text
-/graphify https://github.com/owner/repo
-```
+- Markdown / HTML / TXT 文档
+- PDF / Office 文档
+- 图片 / 架构图
+- 音视频转写后的文本
 
-**PowerShell 注意**：在终端直接跑 CLI 时用 `graphify extract . --out .`，不要写 `/graphify .`（前导 `/` 会被 PowerShell 当成路径）。
+这一阶段会用 LLM 抽取概念、设计理由和跨文件关系。输出关系通常标记为：
 
-### 常用构建参数（Skill / CLI）
+- `INFERRED`：模型根据上下文推断出的关系
+- `AMBIGUOUS`：模型认为不确定，需要人工复核
 
-| 参数 | 作用 |
-|------|------|
-| `--mode deep` | 更激进的 INFERRED 语义边（Skill） |
-| `--update` / `graphify update` | 仅重抽新增/变更文件（代码无需 LLM） |
-| `--no-viz` | 跳过 HTML，只生成报告 + JSON |
-| `cluster-only` | 仅重跑聚类并刷新 `graph.html` / `GRAPH_REPORT.md` |
-| `--directed` | 有向图（保留 source→target） |
-| `--wiki` | 生成按社区拆分的 Markdown wiki |
-| `watch` | 监听目录变更自动重建（无需 LLM） |
-| `--mcp` | 启动 MCP stdio 供 Agent 查询 |
+API 来源取决于执行方式：
 
-大仓库（>200 文件或 >200 万词）时，Skill 会提示选择子目录，避免一次性抽爆 Token。
+| 执行方式 | API 来源 | 是否需要你额外设置 Key |
+|----------|----------|-------------------------|
+| Cursor / 其他 AI 助手中执行 `/graphify .` | 助手当前配置的模型 API | 通常不需要在仓库里额外放 Key |
+| 终端中执行 `graphify .` | 当前 shell 环境中的模型 API 配置 | 需要按所用 provider 设置环境变量 |
+| 只想做代码 AST 图 | 不需要模型 API | 不需要 |
 
-### 建图后查询
+### 语义提取时设置常见大模型 Key
 
-在已有 `graphify-out/` 的前提下：
+终端中运行 `graphify .` 时，语义提取阶段通常从当前 shell 环境变量读取模型凭据。常见 provider 的环境变量名如下，具体以 Graphify 当前版本及其底层 SDK 支持为准：
 
-```text
-/graphify query "Cookie 认证和 CSRF 如何关联？"
-/graphify query "logout 流程" --dfs
-/graphify query "..." --budget 1500
+| Provider | 常见环境变量 |
+|----------|--------------|
+| OpenAI | `OPENAI_API_KEY` |
+| Anthropic / Claude | `ANTHROPIC_API_KEY` |
+| Google Gemini | `GEMINI_API_KEY` 或 `GOOGLE_API_KEY` |
+| DeepSeek | `DEEPSEEK_API_KEY` |
+| OpenRouter | `OPENROUTER_API_KEY` |
+| 阿里云 DashScope / 通义千问 | `DASHSCOPE_API_KEY` |
+| Azure OpenAI | `AZURE_OPENAI_API_KEY`、`AZURE_OPENAI_ENDPOINT`、部署名等 Azure 相关配置 |
 
-/graphify path "CookieLogoutView" "csrf_init"
-/graphify explain "CookieLogoutView"
-```
-
-| 子命令 | 用途 |
-|--------|------|
-| `query` | BFS 遍历相关子图（默认）；`--dfs` 追踪单一路径 |
-| `path` | 两概念间最短路径 |
-| `explain` | 对某节点的 plain-language 说明 |
-
-### 增量追加材料
-
-```text
-/graphify add https://example.com/doc
-/graphify add --author "Name"
-```
-
----
-
-## 输出目录 `graphify-out/`
-
-建图完成后，在扫描根目录下生成 `graphify-out/`（`extract --out .` 即 `./graphify-out/`）：
-
-| 文件 / 目录 | 说明 |
-|-------------|------|
-| `graph.html` | 浏览器交互图（节点点击、过滤、搜索） |
-| `graph.json` | 完整图数据，供 `query` / `path` / `explain` 复用 |
-| `GRAPH_REPORT.md` | 人类可读摘要：god nodes、意外连接、社区 hub |
-| `manifest.json` | 各源文件的 mtime / hash，供 `update` 增量比对 |
-| `cache/` | AST 与语义抽取缓存（本地重建用） |
-| `.graphify_analysis.json` | 抽取统计与元数据 |
-| `.graphify_labels.json` | 社区标签等辅助数据 |
-
-> **勘误**：旧版文档中的 `.graphify_python`、`.graphify_root` 在 graphifyy **0.8.x** 中已由 `manifest.json` 等替代。
-
-可选导出：
+方式一：只在当前 PowerShell 会话临时设置，关闭终端后失效：
 
 ```powershell
-graphify export callflow-html   # Mermaid 调用流 HTML
-graphify tree                   #  collapsible D3 树形 HTML → graphify-out/GRAPH_TREE.html
+$env:GEMINI_API_KEY = "your-key"
+graphify .
 ```
 
-用系统浏览器打开 `graphify-out/graph.html`（与 code-review-graph 类似，避免用 Cursor 窄条 Simple Browser 预览大图谱）。
-
----
-
-## 无界面 CLI（headless）
-
-不经过对话 Skill、直接在终端建图：
-
-```bash
-cd django_learn_demo
-.venv/Scripts/python.exe -m graphify extract . --out .
-# 语义边（需 API Key + openai 或 gemini  extras）：
-# .venv/Scripts/python.exe -m graphify extract . --out . --backend gemini
-```
-
-其他常用命令（graphifyy 0.8.14）：
+方式二：设置当前用户级环境变量，新开的终端会生效：
 
 ```powershell
-graphify update .              # 增量（代码 AST，无 LLM）
-graphify cluster-only .          # 重聚类 + 刷新 HTML/报告
-graphify clone https://github.com/owner/repo
-graphify merge-graphs a/graphify-out/graph.json b/graphify-out/graph.json --out graphify-out/merged.json
-graphify export callflow-html
-graphify benchmark graphify-out/graph.json
+setx GEMINI_API_KEY "your-key"
 ```
 
-> **勘误**：`graphify detect` 在 0.8.x CLI 中**不存在**；建图前可直接 `extract`，或查看 `extract` 日志中的 `found N code, M docs` 行。
-
-启动 MCP（需 `graphifyy[mcp]`）：
+执行 `setx` 后，需要重新打开 PowerShell，再运行：
 
 ```powershell
-graphify --mcp
-# 或在 Skill 中：/graphify --mcp
+graphify .
 ```
 
----
-
-## 边的置信度标签
-
-Graphify 对每条关系标注来源，便于 Review：
-
-| 标签 | 含义 |
-|------|------|
-| `EXTRACTED` | 源码/文档中显式出现（import、调用、引用） |
-| `INFERRED` | 合理推断（共享数据结构、隐含依赖） |
-| `AMBIGUOUS` | 不确定，需人工核对 |
-
-代码文件的 **import/调用** 主要由 Tree-sitter AST 本地抽取；**跨文档概念、设计 rationale** 依赖 LLM 语义边。
-
----
-
-## 在 AiBasic 上的推荐用法
-
-### 场景 A：只分析 Django 学习子项目
+方式三：使用项目本地 `.env` 文件。只有当 Graphify 或启动脚本会显式加载 `.env` 时才有效：
 
 ```text
-/graphify django_learn_demo
+GEMINI_API_KEY=your-key
+OPENAI_API_KEY=your-key
+ANTHROPIC_API_KEY=your-key
 ```
 
-或 headless：`cd django_learn_demo && python -m graphify extract . --out .`  
-产出在 `django_learn_demo/graphify-out/`，与 `django_learn_demo/.code-review-graph/` **互不覆盖**。
+`.env` 只适合本地开发，不应提交到仓库。若使用 `.env`，应确认 `.gitignore` 已忽略它。
 
-### 场景 B：FirstAgent 代码 + 知识工程文档统一图谱
+如果使用 OpenAI / Anthropic / 其他 provider，则按对应工具或 SDK 要求设置环境变量。Graphify 本身不托管模型，也不提供统一中转服务；语义提取阶段使用的是你本机、当前 shell 或 AI 助手已经配置好的模型凭据。
 
-```text
-/graphify FirstAgent knowledge_engineering/agents
-```
-
-适合把 [`knowledge_engineering/agents/`](../agents/) 里的设计说明与 `FirstAgent` 下 Agent 代码关联查询。
-
-### 场景 C：与 code-review-graph 分工
-
-| 任务 | 用哪个 |
-|------|--------|
-| `callers_of` / `tests_for` / `detect-changes` | code-review-graph（见 [code_review_graph.md](code_review_graph.md)） |
-| 「文档里说的架构和代码是否一致？」 | Graphify `query` / `path` |
-| 浏览全局社区结构 | Graphify `graph.html` |
+没有 API Key 时，通常仍可得到代码 AST 图；文档、图片等语义关系可能缺失或出现 semantic extraction 相关警告。
 
 ---
 
-## 支持的文件类型（摘要）
+## 一次完整建图
 
-| 类型 | 扩展名示例 |
-|------|------------|
-| 代码 | `.py` `.ts` `.js` `.go` `.java` `.rs` …（约 31 种） |
-| 文档 | `.md` `.html` `.txt` `.yaml` … |
-| 论文 | `.pdf`（需 `[pdf]`） |
-| 办公 | `.docx` `.xlsx`（需 `[office]`） |
-| 图片 | `.png` `.jpg` `.webp` … |
-| 音视频 | `.mp4` `.mp3` …（需 `[video]`，Whisper 转写） |
+以 `knowledge_engineering` 仓库为例。
 
-代码抽取**不调用外部 API**；文档/图片/视频语义抽取会消耗模型 Token（Gemini 或当前 IDE 会话模型）。
+### 命令行方式
+
+```powershell
+cd D:\kan\kan\Python\knowledge_engineering
+.\.venv\Scripts\python -m graphify .
+```
+
+如果使用全局命令：
+
+```powershell
+cd D:\kan\kan\Python\knowledge_engineering
+graphify .
+```
+
+### Cursor 方式
+
+在 Cursor 聊天中输入：
+
+```text
+/graphify .
+```
+
+这会对当前仓库建图。若工作区里打开了多个仓库，建议先明确路径：
+
+```text
+/graphify D:\kan\kan\Python\knowledge_engineering
+```
+
+---
+
+## 图谱生成行为
+
+Graphify 建图命令默认会在扫描根目录下生成 `graphify-out/`。例如在 `knowledge_engineering` 根目录执行后，默认产物是：
+
+```text
+D:\kan\kan\Python\knowledge_engineering\graphify-out\
+```
+
+常见输出：
+
+| 文件 / 目录 | 说明 | 默认是否生成 |
+|-------------|------|--------------|
+| `graph.json` | 完整图谱数据，供 `query` / `path` / `explain` 使用 | 是 |
+| `graph.html` | 可视化交互图 | 是，除非使用 `--no-viz` |
+| `GRAPH_REPORT.md` | 人类可读摘要，例如 hub、社区、异常连接 | 是 |
+| `manifest.json` | 文件 hash / mtime 等增量更新依据 | 是 |
+| `cache/` | 本地缓存，便于重跑和增量 | 通常会生成 |
+| `.graphify_analysis.json` | 抽取统计和元数据 | 版本相关，可能生成 |
+| `.graphify_labels.json` | 社区标签等辅助数据 | 版本相关，可能生成 |
+
+打开可视化：
+
+```text
+D:\kan\kan\Python\knowledge_engineering\graphify-out\graph.html
+```
+
+建议用系统浏览器打开，不要用 Cursor 窄窗口预览大图。
+
+### 其他可视化输出
+
+`graph.html` 是默认交互图，适合浏览完整知识图谱。除此之外，Graphify 还可按用途生成更聚焦的视图：
+
+| 可视化形式 | 典型用途 | 示例命令 |
+|------------|----------|----------|
+| 交互图 `graph.html` | 浏览完整图谱、搜索节点、查看社区结构 | `graphify .` |
+| 调用流 HTML | 看函数、类、模块之间的调用方向，适合代码 Review；HTML 中可包含架构 / 调用流 Mermaid 图 | `graphify export callflow-html .` |
+| 树形视图 | 从目录、模块或概念层级理解项目结构 | `graphify tree` |
+| SVG | 导出静态图片，适合放进文档或报告 | `graphify . --svg` |
+| GraphML | 给 Gephi、yEd 等专业图工具继续分析 | `graphify . --graphml` |
+| Wiki / Obsidian | 按社区拆分为可阅读的知识库 | `graphify . --wiki` / `graphify . --obsidian` |
+| Neo4j Cypher | 导入图数据库做复杂查询 | `graphify . --neo4j` |
+
+当前 CLI 支持 `html`、`callflow-html`、`obsidian`、`wiki`、`svg`、`graphml`、`neo4j` 等导出格式；没有单独的 `callflow-mermaid` 格式。不同 Graphify 版本的导出子命令可能略有差异；如果命令不可用，先查看当前安装版本支持的导出项：
+
+```powershell
+graphify --help
+graphify export --help
+```
+
+### 跳过可视化
+
+如果只要 JSON 和报告，不生成 HTML：
+
+```powershell
+graphify . --no-viz
+```
+
+### 只重新聚类 / 刷新图谱展示
+
+已有 `graphify-out/graph.json`，只想重新生成社区聚类或刷新 HTML / 报告：
+
+```powershell
+graphify . --cluster-only
+```
+
+### 增量更新
+
+代码或文档小范围变更后：
+
+```powershell
+graphify . --update
+```
+
+增量更新依赖 `graphify-out/manifest.json`。如果改动较大、节点异常减少或结果不可信，直接重新跑全量建图：
+
+```powershell
+graphify .
+```
+
+---
+
+## 建图后查询
+
+已有 `graphify-out/` 后，可以查询图谱。
+
+命令行：
+
+```powershell
+cd D:\kan\kan\Python\knowledge_engineering
+graphify query "code-review-graph 和 Graphify 的区别是什么？"
+graphify query "图谱生成流程" --budget 1500
+graphify path "code-review-graph" "Graphify"
+graphify explain "Graphify"
+```
+
+Cursor 中：
+
+```text
+/graphify query "code-review-graph 和 Graphify 的区别是什么？"
+/graphify query "图谱生成流程" --budget 1500
+/graphify path "code-review-graph" "Graphify"
+/graphify explain "Graphify"
+```
+
+---
+
+## 导出与集成
+
+常用导出参数和子命令：
+
+```powershell
+graphify . --wiki          # 按社区生成 Markdown wiki
+graphify . --obsidian      # 生成 Obsidian vault
+graphify . --svg           # 导出 graph.svg
+graphify . --graphml       # 导出 graph.graphml
+graphify . --neo4j         # 生成 cypher.txt
+graphify export callflow-html .
+graphify tree
+```
+
+启动 MCP stdio 服务需安装 `graphifyy[mcp]`：
+
+```powershell
+pip install "graphifyy[mcp]"
+graphify . --mcp
+```
+
+---
+
+## 版本控制建议
+
+`graphify-out/` 是生成物，是否提交取决于用途：
+
+- 若希望团队或 AI 助手复用同一份图谱，可以提交 `graphify-out/graph.json`、`GRAPH_REPORT.md` 等核心产物。
+- 若图谱可随时本地重建，通常把 `graphify-out/` 放进 `.gitignore`。
+- `cache/` 通常不建议提交。
+- API Key 不应写入仓库，应放在 shell 环境变量、系统凭据或 AI 工具自己的配置中。
+
+当前仓库若只把 Graphify 作为本地分析工具，推荐忽略：
+
+```gitignore
+graphify-out/
+```
 
 ---
 
 ## 常见问题
 
-**`graphify: command not found`**
+### `graphify: command not found`
 
-- 使用 `uv tool install graphifyy` 或 `pipx install graphifyy`；plain `pip` 进 venv 时用 `python -m graphify`（本仓库 `django_learn_demo/.venv`）。
+说明命令未进入 PATH。使用 venv 时改用：
 
-**`semantic chunk(s) failed` / `requires the openai package`**
+```powershell
+.\.venv\Scripts\python -m graphify .
+```
 
-- headless 下未装 API 客户端或未设 Key 时，**文档语义边**会失败；**代码 AST 图仍会写入** `graph.json`。需要完整语义边时：`pip install openai` 或 `graphifyy[gemini]`，并设置对应 API Key 后重跑 `extract`。
+或用 `uv tool install graphifyy` / `pipx install graphifyy` 全局安装。
 
-**`extract --out graphify-out` 写了两层目录？**
+### 有 API 警告，是否代表建图失败？
 
-- `--out` 是**父目录**，实际输出为 `<out>/graphify-out/`。对本仓库请用 `--out .`，得到 `./graphify-out/`。
+不一定。AST 阶段不需要 API，代码图仍可生成。API 相关警告通常影响文档、图片、论文等语义边。
 
-**与 code-review-graph MCP 冲突吗？**
+### AST 提取和语义提取是否是两个独立命令？
 
-- 不冲突。MCP 指向 `code_review_graph`；Graphify 写 `graphify-out/` 并通过 Skill 或 `graphify query` 查询。`graph.json` 可按需提交；`cache/` 建议忽略。
+日常使用中通常不是。`graphify .` 会编排完整流程：先做 AST，再做语义提取，最后生成图谱。二者是流水线的两个阶段，不需要分别手动执行。你需要区分的是：AST 阶段本地确定性完成，语义阶段才可能需要模型 API。
 
-**大仓库很慢**
+### 默认是否生成 `graph.html`？
 
-- 用子目录建图；或 `graphify update` 增量；语料极大时设置 `GEMINI_API_KEY` 走并行 Gemini 抽取。
+默认生成。只有显式使用 `--no-viz` 时才跳过 HTML 可视化。
 
-**Windows 上 `/graphify` 无效**
+### Cursor 中的 `/graphify .` 和终端 `graphify .` 有什么区别？
 
-- 在**终端**用 `python -m graphify extract . --out .`；在 **Cursor 聊天**里用 `/graphify django_learn_demo`。
+目标相同，都是建图。区别在于运行环境：
+
+- Cursor 中的 `/graphify .` 由 AI 助手调用，语义提取可使用助手已配置的模型能力。
+- 终端中的 `graphify .` 由当前 shell 执行，语义提取依赖 shell 中的环境变量和本机依赖。
 
 ---
 
 ## 链接
 
-| 资源 | URL |
-|------|-----|
-| 官网 | https://graphify.net/ |
-| GitHub | https://github.com/safishamsi/graphify |
-| CLI 参考 | https://graphify.net/graphify-cli-commands.html |
-| PyPI | https://pypi.org/project/graphifyy/ |
+- 官网：https://graphify.net/
+- GitHub：https://github.com/safishamsi/graphify
+- CLI 参考：https://graphify.net/graphify-cli-commands.html
+- PyPI：https://pypi.org/project/graphifyy/
 
 ---
 
-*最后更新：2026-05-22（django_learn_demo 实例已建图；勘误 graphifyy 0.8.14 CLI 与输出文件）*
+*最后更新：2026-05-27（整理为单仓库示例，拆清 AST / 语义提取、API 来源与图谱生成行为）*

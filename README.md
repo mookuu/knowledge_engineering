@@ -7,7 +7,7 @@ AiBasic 仓库内集中存放学习笔记、架构说明与工具文档（Markdo
 | 路径 | 说明 |
 |------|------|
 | [`django/`](django/) | Django / Python Web、Docker、项目结构等笔记 |
-| [`agents/`](agents/) | Agent、ReAct、Prompt、Skill 与零碎学习备忘 |
+| [`agents/`](agents/) | Agent、ReAct、Prompt、Harness Engineering、Skill 与零碎学习备忘 |
 | [`code_graph/`](code_graph/) | code-review-graph、Graphify 建图与工具选型 |
 
 ## 与代码工程的关系
