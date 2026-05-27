@@ -1,6 +1,6 @@
 # 知识工程（knowledge_engineering）
 
-AiBasic 仓库内集中存放学习笔记、架构说明与工具文档（Markdown 及配图），与可运行代码工程（如 `FirstAgent/`、`django_learn_demo/`）分离，便于归档与检索。
+本仓库集中存放学习笔记、架构说明与工具文档（Markdown 及配图），与可运行代码工程（如 [mookuu/AI](https://github.com/mookuu/AI) 中的 `FirstAgent/`、`django_learn_demo/`）分离，便于归档与检索。
 
 ## 目录
 
@@ -12,17 +12,10 @@ AiBasic 仓库内集中存放学习笔记、架构说明与工具文档（Markdo
 
 ## 与代码工程的关系
 
-- **`FirstAgent/`**：智能体示例代码（`scripts/`、`notebooks/`），文档已迁至本目录 [`agents/`](agents/) 与 [`code_graph/`](code_graph/)。
-- **`django_learn_demo/`** 等：运行时代码与图谱产物仍在各子项目内；操作说明见 [`code_graph/code_review_graph.md`](code_graph/code_review_graph.md)。
+- **AiBasic**（[mookuu/AI](https://github.com/mookuu/AI)）：智能体与 Django 示例代码；文档链接指向本仓库。
+- **`FirstAgent/`**：示例代码在 AiBasic；Agent 笔记见 [`agents/`](agents/) 与 [`code_graph/`](code_graph/)。
+- **`django_learn_demo/`** 等：运行时代码与图谱产物在 AiBasic 子项目内；操作说明见 [`code_graph/code_review_graph.md`](code_graph/code_review_graph.md)。
 
-## 独立仓库同步
+## 本机多根工作区
 
-本目录内容同步至 [github.com/mookuu/knowledge_engineering](https://github.com/mookuu/knowledge_engineering) 的 `main` 分支。
-
-在 AiBasic 根目录执行：
-
-```bash
-bash scripts/sync-knowledge-engineering.sh
-```
-
-提交 AiBasic 且修改了 `knowledge_engineering/` 后，应推送到 `origin` 再运行上述脚本。
+常与 AiBasic、PythonBasic、learning_log 一并打开：`D:\kan\kan\Python\PythonBasic.code-workspace`。文档仅在本仓库维护，AiBasic 内不再包含 `knowledge_engineering/` 子目录。
