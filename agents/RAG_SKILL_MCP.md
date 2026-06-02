@@ -1,6 +1,6 @@
 # RAG、Skill、MCP 的区别与组合
 
-> 结合 [llm-wiki](https://github.com/luotwo/llm-wiki) 方法论与 **mind-sync** 个人知识库实践整理。  
+> 结合 [llm-wiki](https://github.com/luotwo/llm-wiki) 方法论与 **mind-sync** 个人知识库实践整理。
 > 相关笔记：[[harness_engineering]]、[[HelloAgents]]
 
 ## 一句话区分
@@ -37,7 +37,7 @@
 2. 用户提问 → 检索 Top-K 相关片段
 3. 把片段 + 问题交给 LLM 生成答案
 
-**特点**：实现快、适合「资料很多、结构松散、一次性问答」。  
+**特点**：实现快、适合「资料很多、结构松散、一次性问答」。
 **局限**（[llm-wiki](https://github.com/luotwo/llm-wiki) 的核心批评）：每次提问都在**从零拼凑**碎片，跨多篇资料的综合、矛盾标注、实体关系**不会自动沉淀**；复杂问题每次都要重新「考古」。
 
 ### mind-sync 中的 RAG 变体
@@ -143,7 +143,7 @@ MCP 是 **Agent 与外部系统之间的标准工具协议**：Host（如 Cursor
 
 ### 与 RAG 的关系
 
-MCP **可以暴露 RAG 能力**（例如 `search_docs`、`query_wiki`），也可以暴露 **非检索** 能力（同步、图谱、部署）。  
+MCP **可以暴露 RAG 能力**（例如 `search_docs`、`query_wiki`），也可以暴露 **非检索** 能力（同步、图谱、部署）。
 RAG 是 **一种后端能力**；MCP 是 **把能力接到 Agent 的插头**。
 
 llm-wiki 提到 qmd 同时提供 CLI 与 MCP Server——检索本身仍是 RAG，**接入方式**是 MCP。
