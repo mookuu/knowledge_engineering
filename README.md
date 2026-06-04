@@ -6,6 +6,7 @@
 
 | 路径 | 说明 |
 |------|------|
+| [`manual/`](manual/) | 日常工具操作备忘（如 VS Code / Cursor 快捷键） |
 | [`django/`](django/) | Django / Python Web、Docker、项目结构等笔记 |
 | [`agents/`](agents/) | Agent、ReAct、Prompt、Harness Engineering、Skill 与零碎学习备忘 |
 | [`code_graph/`](code_graph/) | code-review-graph、Graphify 建图与工具选型 |
