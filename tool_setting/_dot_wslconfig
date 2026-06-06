@@ -1,0 +1,11 @@
+[wsl2]
+networkingMode=mirrored
+dnsTunneling=true
+firewall=true
+autoProxy=true
+
+# === 资源控制 ===
+memory=8GB
+processors=8
+swap=4GB
+localhostForwarding=true
