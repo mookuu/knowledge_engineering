@@ -148,6 +148,30 @@ pip list --format=freeze > requirements.txt  # 同上，格式一致
 python -m pip install --upgrade pip
 ```
 
+### 2.6 清理 pip 缓存
+
+pip 会缓存下载的 wheel 包，加快重复安装速度，但日积月累会占用不少磁盘空间。
+
+```bash
+# 查看缓存信息（位置、大小、包数量）
+pip cache info
+
+# 列出缓存中的包
+pip cache list
+
+# 清理全部缓存
+pip cache purge
+
+# 删除特定包的缓存
+pip cache remove <package-name>
+```
+
+> **缓存使用建议**：
+> - **日常保留**：缓存能显著加速 `pip install`，无需频繁清理
+> - **何时清理**：磁盘空间告急、或遇到因缓存损坏导致的安装报错（如校验和不一致）时，优先 `pip cache purge`
+> - **CI/CD 环境**：临时环境可设置 `PIP_NO_CACHE_DIR=1` 或 `pip install --no-cache-dir` 跳过缓存，减少 CI 磁盘压力
+> - **精确管理**：用 `pip cache info` 定期查看缓存大小，大项目可每月检查一次
+
 ---
 
 ## 三、pip / npm / pnpm 区别
