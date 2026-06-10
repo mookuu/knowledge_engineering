@@ -1,7 +1,7 @@
-# VS Code / Cursor 快捷键备忘（Windows）
+DeepSeek: 设置 API Key# VS Code / Cursor 快捷键备忘（Windows）
 
-> **适用**：Visual Studio Code、Cursor（基于 VS Code，快捷键大体一致）。  
-> **平台**：Windows；macOS 请将 `Ctrl` 换为 `Cmd`，`Alt` 换为 `Option`。  
+> **适用**：Visual Studio Code、Cursor（基于 VS Code，快捷键大体一致）。
+> **平台**：Windows；macOS 请将 `Ctrl` 换为 `Cmd`，`Alt` 换为 `Option`。
 > **官方**：编辑器内 `Ctrl+K Ctrl+S` 打开快捷键表；[VS Code 默认键位](https://code.visualstudio.com/docs/configure/keybindings)。
 
 ---
