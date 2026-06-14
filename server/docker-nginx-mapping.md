@@ -80,24 +80,7 @@ docker run -d --name nginx \
            nginx 读取文件内容返回给浏览器
 ```
 
-## 关键命令
-
-```bash
-# 查看当前容器挂载
-docker inspect nginx | grep -A 5 Mounts
-
-# 查看容器内部配置
-docker exec nginx cat /etc/nginx/conf.d/default.conf
-
-# 重启 nginx（让新配置生效）
-docker restart nginx
-
-# 查看日志
-docker logs nginx
-
-# 进入容器查看
-docker exec -it nginx sh
-```
+> 💡 **Docker Nginx 常用命令已统一整理到 [`nginx_commands.md`](./nginx_commands.md#二docker-下-nginx-命令)**，包括启动容器、重载配置、查看日志、查看挂载等。
 
 ## 多个项目共存
 

@@ -6,7 +6,9 @@
 
 ---
 
-## 一、常用命令
+## 一、非 Docker（直接安装）下 Nginx 命令
+
+> 适用于通过包管理器或源码直接安装在系统中的 Nginx。
 
 ### 1.1 启动 / 停止 / 重载
 
@@ -87,26 +89,79 @@ sudo systemctl enable nginx
 sudo systemctl status nginx
 ```
 
-### 1.5 Docker 中管理 Nginx
+---
+
+## 二、Docker 下 Nginx 命令
+
+> 适用于以容器方式运行的 Nginx。
+
+### 2.1 启动容器
 
 ```bash
-# 启动 Nginx 容器
+# 基本启动
 docker run -d --name nginx -p 80:80 nginx
 
-# 挂载自定义配置
+# 挂载自定义配置（推荐生产使用）
 docker run -d --name nginx \
   -p 80:80 \
   -v /host/nginx.conf:/etc/nginx/nginx.conf:ro \
   -v /host/conf.d:/etc/nginx/conf.d:ro \
+  -v /host/html:/usr/share/nginx/html:ro \
+  -v /host/logs:/var/log/nginx \
   nginx
 
-# 重新加载配置（无需重启容器）
+# 多站点共存在同一容器中（不同端口）
+docker run -d --name nginx \
+  -p 8080:80 \
+  -p 8081:80 \
+  -v /host/conf.d:/etc/nginx/conf.d:ro \
+  nginx
+```
+
+### 2.2 重新加载配置（无需重启容器）
+
+```bash
 docker exec nginx nginx -s reload
+```
+
+### 2.3 重启 / 停止容器
+
+```bash
+# 重启容器（会短暂中断服务）
+docker restart nginx
+
+# 停止容器
+docker stop nginx
+
+# 启动已停止的容器
+docker start nginx
+```
+
+### 2.4 查看日志
+
+```bash
+docker logs nginx
+
+# 实时查看
+docker logs -f nginx
+```
+
+### 2.5 查看 / 修改容器内部配置
+
+```bash
+# 查看容器内配置文件内容
+docker exec nginx cat /etc/nginx/conf.d/default.conf
+
+# 进入容器内部交互式查看
+docker exec -it nginx sh
+
+# 查看当前容器挂载的卷
+docker inspect nginx | grep -A 5 Mounts
 ```
 
 ---
 
-## 二、配置文件结构
+## 三、配置文件结构
 
 ### 2.1 主要目录与文件
 
