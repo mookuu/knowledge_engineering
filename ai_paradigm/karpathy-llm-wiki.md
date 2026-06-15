@@ -13,15 +13,93 @@
 
 ## 一、三层架构
 
-| 层             | 角色       | 组件                                   | 说明                                                            |
-| -------------- | ---------- | -------------------------------------- | --------------------------------------------------------------- |
-| **规则约束层** | 定义边界   | `SCHEMA.md`、模板、操作规则            | 规定 frontmatter 格式、置信度分级、Ingest/Query/Lint 的操作规范 |
-| **存储层**     | 持久化知识 | `summaries/`、`queries/`               | 经 LLM 加工的 Markdown 文件，人可读可编辑                       |
-| **导航层**     | 提供入口   | `index.md`（目录）、`log.md`（时间线） | 自动维护，无需手动操作                                          |
+```
+┌─────────────────────────────────────────────────┐
+│                   Raw                            │
+│   原始层：sources/、笔记、网页剪藏、代码片段等      │
+│   只读，不修改                                    │
+└───────────────────────┬─────────────────────────┘
+                        │ Ingest
+                        ▼
+┌─────────────────────────────────────────────────┐
+│                   Wiki                           │
+│   知识层：summaries/ + queries/ + index + log    │
+│   LLM 维护的结构化 Markdown，人可读可编辑          │
+└───────────────────────┬─────────────────────────┘
+                        │ 遵循
+                        ▼
+┌─────────────────────────────────────────────────┐
+│                   Schema                         │
+│   规则层：SCHEMA.md、模板、操作规范、置信度分级     │
+│   告诉 Agent「怎么维护」知识库                     │
+└─────────────────────────────────────────────────┘
+```
 
-### ① 规则约束层（Rules / SCHEMA）
+| 层 | 角色 | 内容 | 可写？ |
+|----|------|------|--------|
+| **Raw** | 原始素材 | `sources/`、网页剪藏、PDF、代码片段、外部笔记 | 只读 |
+| **Wiki** | 知识库 | `summaries/`（摘要）、`queries/`（问答沉淀）、`index.md`（目录）、`log.md`（时间线） | **LLM 自动维护** |
+| **Schema** | 规则约束 | `SCHEMA.md`、模板、Skill 工作流定义 | 人工维护 |
 
-该层定义了整个 Wiki 的**行为边界和质量标准**，是其他两层运作的前提。
+> 类比（llm-wiki 原文）：Obsidian 是 IDE，LLM 是程序员，**Wiki 是代码库**；Schema/Skill 则是**编码规范 + 开发流程**。
+
+### ① Raw 层（原始素材）
+
+原始资料，**只读不修改**。来源包括：
+
+- **本地笔记**：`sources/` 下的 Markdown 笔记
+- **网页剪藏**：Obsidian Web Clipper / 浏览器扩展保存
+- **GitHub 仓库**：clone 到本地的代码/文档
+- **PDF/文档**：手动放入的原始文件
+- **代码片段**：项目中提取的代码块
+
+Raw → Wiki 的转换方向是**单向**的：原始资料只作为 Ingest 的输入，不会被修改。如果 Raw 更新了，Lint 会检测 `stale-summary` 标记过时摘要，触发重新 Ingest。
+
+### ② Wiki 层（知识库）
+
+LLM 维护的**结构化 Markdown 知识库**，包含四大组件：
+
+| 组件 | 路径 | 说明 | 维护方式 |
+|------|------|------|----------|
+| **摘要** | `summaries/{topic}/{slug}.md` | 对 Raw 素材的结构化学习摘要 | Ingest 生成，File Back 追加 |
+| **问答沉淀** | `queries/{timestamp}_{slug}.md` | Q&A 记录，带 evidence 引用 | Query 时自动保存 |
+| **目录** | `index.md` | 按 topic 分类的摘要/问答导航 | **自动重建**，禁止手改 |
+| **时间线** | `log.md` | Append-only 操作事件日志 | **自动追加**，禁止手改 |
+
+目录结构：
+
+```
+data/wiki/
+├── SCHEMA.md              ← Schema 层
+├── index.md               ← Wiki 层（自动生成）
+├── log.md                 ← Wiki 层（自动生成）
+├── summaries/             ← Wiki 层
+│   ├── topic-a/
+│   │   ├── page1.md
+│   │   └── page2.md
+│   └── topic-b/
+│       └── page3.md
+└── queries/               ← Wiki 层
+    └── 20260615_qa-example.md
+```
+
+每个摘要文件的 frontmatter 示例：
+
+```yaml
+---
+type: summary
+topic: prompt-engineering
+tags: [chain-of-thought, reasoning]
+sources:
+  - knowledge_engineering/notes/cot-intro.md
+confidence: extracted
+updated: 2026-06-15
+---
+```
+
+### ③ Schema 层（规则约束）
+
+该层定义了整个 Wiki 的**行为边界和质量标准**，是 Raw → Wiki 转换的规则依据。
 
 ```
 SCHEMA.md
@@ -49,47 +127,7 @@ SCHEMA.md
     └── thin-content：内容过短
 ```
 
-**SCHEMA 的作用**：没有规则约束，LLM 生成的摘要格式不一、质量不可控、来源不可追溯。SCHEMA 确保所有操作**可重复、可质检、可追溯**。
-
-### ② 存储层（Storage / summaries + queries）
-
-```
-data/wiki/
-├── SCHEMA.md              ← 规则约束层
-├── index.md               ← 导航层（自动生成）
-├── log.md                 ← 导航层（自动生成）
-├── summaries/             ← 存储层：LLM 加工后的知识摘要
-│   ├── topic-a/
-│   │   ├── page1.md
-│   │   └── page2.md
-│   └── topic-b/
-│       └── page3.md
-└── queries/               ← 存储层：问答沉淀记录
-    └── 20260615_qa-example.md
-```
-
-每个摘要文件的 frontmatter 示例：
-
-```yaml
----
-type: summary
-topic: prompt-engineering
-tags: [chain-of-thought, reasoning]
-sources:
-  - knowledge_engineering/notes/cot-intro.md
-confidence: extracted
-updated: 2026-06-15
----
-```
-
-### ③ 导航层（Navigation / index + log）
-
-由程序自动维护，**禁止手动编辑**。
-
-| 文件       | 内容                                     | 更新时机                                                     |
-| ---------- | ---------------------------------------- | ------------------------------------------------------------ |
-| `index.md` | 按 topic 分类的摘要/问答目录，带简要描述 | Ingest / File Back / Query 后自动重建                        |
-| `log.md`   | Append-only 事件时间线                   | 每次操作（sync / ingest / query / lint / file back）自动追加 |
+**Schema 的作用**：没有规则约束，LLM 生成的摘要格式不一、质量不可控、来源不可追溯。Schema 确保所有操作**可重复、可质检、可追溯**。
 
 ---
 
@@ -243,7 +281,7 @@ LLM 判断：这段新知识是否值得写入 Wiki？
 | **索引**     | 人手工维护目录              | 自动生成 `index.md`                        |
 | **检索**     | 关键词搜索                  | 自然语言语义问答                           |
 | **维护**     | 过期笔记无人管              | Lint 自动检测 stale 条目                   |
-| **规则约束** | 无统一规范，格式因人而异    | SCHEMA.md 定义统一 frontmatter + 操作规范  |
+| **架构分层** | 无明确分层                  | **Schema → Wiki → Raw** 三层架构           |
 | **工作流**   | 单向：记录 → 遗忘           | 闭环：Ingest → Compile → Query → File Back |
 | **规模**     | 人脑容量限制（~几百条）     | 可扩展到数千上万条                         |
 | **闭环**     | 知识单向消耗，无自动回流    | File Back 回流：问答新知识自动写回 Wiki    |
@@ -339,7 +377,7 @@ RAG（Retrieval-Augmented Generation）和 Karpathy LLM Wiki 都涉及"检索 + 
 | **定位**            | 一种推理增强技术                   | 一种知识管理体系                                        |
 | **数据源**          | 原始文档直接检索                   | **经过 LLM 摘要加工**的结构化 Markdown                  |
 | **写入**            | 只读——文档原样存入向量库，不修改   | **可写**——Ingest 生成摘要，File Back 回流知识           |
-| **规则约束**        | 无——数据原样入库                   | **有**——SCHEMA.md 统一定义格式和操作规范                |
+| **架构分层**        | 无明确分层                         | **Schema → Wiki → Raw** 三层架构                         |
 | **工作流**          | 单步：检索 → 生成                  | **四步闭环**：Ingest → Compile → Query → File Back      |
 | **索引维护**        | 无——需手动更新文档库               | 自动——Compile 阶段重建 `index.md` + `log.md` + 搜索引擎 |
 | **知识密度**        | 低——检索结果是原始段落，含大量噪音 | **高**——检索结果是 LLM 提炼后的精华摘要                 |
@@ -374,8 +412,8 @@ RAG（Retrieval-Augmented Generation）和 Karpathy LLM Wiki 都涉及"检索 + 
 
 1. **SCHEMA 驱动** — 所有操作遵循 SCHEMA.md 定义的规则，确保格式统一、质量可控、来源可追溯
 2. **Append-only log** — `log.md` 只追加不修改，保留完整历史
-3. **导航层自动化** — `index.md` 和 `log.md` 由程序自动维护，人不需要碰
-4. **四步闭环工作流** — Ingest → Compile → Query → File Back，每次操作后自动编译导航层
+3. **Wiki 层自动化** — `index.md`、`log.md`、搜索引擎索引由程序自动维护
+4. **四步闭环工作流** — Ingest → Compile → Query → File Back，每次操作后自动 Compile（重建索引 + 导航）
 5. **File Back 回流** — 问答中产生的新知识自动写回 Wiki，知识库在每次交互中生长
 6. **质检闭环** — Lint 贯穿始终，检测 stale / broken-link / orphan / thin-content
 7. **LLM 作为胶水** — LLM 贯穿 ingest→compile→query→file back→lint 全流程的核心引擎
