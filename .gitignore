@@ -1,1 +1,2 @@
 # 项目特有规则（通用规则见全局 ~/.gitignore）
+.reasonix/
