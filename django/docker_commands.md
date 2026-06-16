@@ -77,13 +77,16 @@
 + `docker compose up` — 启动所有服务
   + `-d` — 后台运行
   + `--build` — 强制重新构建镜像
++ `docker compose up --build -d <service>` — **单独重建并启动某个服务**（如 `api`、`web`）
 + `docker compose down` — 停止并删除所有容器、网络
   + `-v` — 同时删除数据卷
 + `docker compose ps` — 查看服务状态
 + `docker compose logs` — 查看所有服务日志
   + `-f` — 实时跟踪
++ `docker compose logs -f <service>` — 跟踪单个服务的日志
 + `docker compose exec <service> bash` — 进入某个服务的容器
-+ `docker compose build` — 构建或重新构建服务镜像
++ `docker compose build` — 构建或重新构建所有服务镜像
++ `docker compose build <service>` — 仅重新构建某个服务的镜像
 + `docker compose pull` — 拉取服务镜像
 + `docker compose restart` — 重启服务
 + `docker compose stop` — 停止服务（不删除容器）
