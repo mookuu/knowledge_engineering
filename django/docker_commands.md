@@ -105,7 +105,7 @@
 
 ### 常用组合示例
 
-```bash
+````bash
 # 运行 MySQL 容器
 docker run -d --name mysql \
   -p 3306:3306 \
@@ -130,4 +130,64 @@ docker load -i myapp.tar
 docker compose up -d --build    # 构建并后台启动
 docker compose logs -f          # 跟踪日志
 docker compose down -v          # 停止并清理
+
+---
+
+### 项目实战：前后端单独构建与部署
+
+以 **mind-sync** 项目为例（docker-compose.yml 中包含 `api` 后台 和 `web` 前端两个服务）：
+
+#### 开发环境（docker-compose.yml）
+
+```bash
+# 仅构建后台（api）镜像，不启动
+docker compose build api
+
+# 仅构建前端（web）镜像，不启动
+docker compose build web
+
+# 单独构建并后台启动后台（api）服务
+docker compose up --build -d api
+
+# 单独构建并后台启动前端（web）服务
+docker compose up --build -d web
+
+# 分别构建并后台启动所有服务
+docker compose up --build -d
+````
+
+#### 生产环境（docker-compose.prod.yml）
+
+```bash
+# 仅构建后台（api）生产镜像
+docker compose -f docker-compose.prod.yml build api
+
+# 仅构建前端（web）生产镜像
+docker compose -f docker-compose.prod.yml build web
+
+# 单独构建并后台启动后台（api）生产服务
+docker compose -f docker-compose.prod.yml up --build -d api
+
+# 单独构建并后台启动前端（web）生产服务
+docker compose -f docker-compose.prod.yml up --build -d web
+
+# 分别构建并后台启动所有生产服务
+docker compose -f docker-compose.prod.yml up --build -d
+```
+
+#### 查看日志（按服务）
+
+```bash
+# 仅查看后台（api）日志
+docker compose logs -f api
+
+# 仅查看前端（web）日志
+docker compose logs -f web
+
+# 生产环境查看后台日志
+docker compose -f docker-compose.prod.yml logs -f api
+```
+
+```
+
 ```
