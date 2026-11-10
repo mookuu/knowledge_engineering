@@ -6,6 +6,7 @@
 | ---------------------------------------------------------------------- | ------------------------------------------------------------------------------- |
 | [vi_commands.md](vi_commands.md)                                         | Vi/Vim 常用命令：模式切换、移动、编辑、搜索替换、多文件操作                    |
 | [vscode_shortcuts_windows.md](vscode_shortcuts_windows.md)             | VS Code / Cursor 常用快捷键（Windows）                                          |
+| [vscode_markdown.md](vscode_markdown.md)                               | Markdown 编辑与预览：左右分屏一体视图、纯一览切换、编辑快捷键、插件分工与排错   |
 | [github_git_commands.md](github_git_commands.md)                       | Git / GitHub 常用命令（含 `images/` 配图，整理自 Java `Github.md`）             |
 | [python_commands.md](python_commands.md)                               | Python 虚拟环境、pip 包管理、pip / npm / pnpm 区别                              |
 | [linux_command/file_permissions.md](linux_command/file_permissions.md) | Linux 文件权限详解：rwx / rws / rwS、chmod 数值与符号模式、SUID/SGID/Sticky Bit |

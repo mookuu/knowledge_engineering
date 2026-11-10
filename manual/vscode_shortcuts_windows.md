@@ -1,4 +1,4 @@
-DeepSeek: 设置 API Key# VS Code / Cursor 快捷键备忘（Windows）
+# VS Code / Cursor 快捷键备忘（Windows）
 
 > **适用**：Visual Studio Code、Cursor（基于 VS Code，快捷键大体一致）。
 > **平台**：Windows；macOS 请将 `Ctrl` 换为 `Cmd`，`Alt` 换为 `Option`。
@@ -129,6 +129,9 @@ DeepSeek: 设置 API Key# VS Code / Cursor 快捷键备忘（Windows）
 | `Ctrl+K` `V`   | 侧边打开预览           |
 | `Ctrl+K` `Z`   | **禅模式**（全屏写作） |
 | `Esc` `Esc`    | 退出禅模式             |
+
+> Markdown 专门的配置（插件分工、一体视图、加粗/斜体/表格/目录等编辑键、排错）见
+> [vscode_markdown.md](vscode_markdown.md)。
 
 ---
 
