@@ -19,4 +19,4 @@
 
 ## 本机多根工作区
 
-常与 AiBasic、PythonBasic、learning_log 一并打开：`D:\kan\kan\Python\PythonBasic.code-workspace`。文档仅在本仓库维护，AiBasic 内不再包含 `knowledge_engineering/` 子目录。
+本机多根工作区：`C:\Workspace\10.it\m1.code-workspace`（含 knowledge_engineering、mind-sync、Python、Java、AI）。文档仅在本仓库维护，AiBasic 内不再包含 `knowledge_engineering/` 子目录。

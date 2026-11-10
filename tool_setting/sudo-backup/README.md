@@ -2,7 +2,7 @@
 
 ## 来源
 
-这些文件是 WSL (Ubuntu) 下 **sudo 损坏时** 的修复备份，最初保存在 `PythonBasic/.reasonix/sudo-backup/`。
+这些文件是 WSL (Ubuntu) 下 **sudo 损坏时** 的修复备份，最初保存在 Python 项目的 `.reasonix/sudo-backup/`。
 
 ## 文件清单
 

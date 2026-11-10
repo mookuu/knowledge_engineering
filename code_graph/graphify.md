@@ -6,7 +6,7 @@
 2. **语义提取**：用 LLM 从文档、图片、论文等非结构化材料中抽取概念和关系。
 3. **图谱生成**：合并两阶段结果，做社区聚类，生成 `graph.json`、`graph.html` 和报告。
 
-本文只用一个仓库做示例：`D:\kan\kan\Python\knowledge_engineering`。
+本文只用一个仓库做示例：`C:\Workspace\10.it\30.knowledge\knowledge_engineering`。
 
 ---
 
@@ -15,7 +15,7 @@
 PyPI 包名是 **`graphifyy`**，安装后命令名是 `graphify`。
 
 ```powershell
-cd D:\kan\kan\Python\knowledge_engineering
+cd C:\Workspace\10.it\30.knowledge\knowledge_engineering
 python -m venv .venv
 .\.venv\Scripts\pip install graphifyy
 .\.venv\Scripts\python -m graphify --help
@@ -85,14 +85,14 @@ AST 提取用于代码文件，例如 `.py`、`.js`、`.ts`、`.go`、`.java`、
 命令行执行：
 
 ```powershell
-cd D:\kan\kan\Python\knowledge_engineering
+cd C:\Workspace\10.it\30.knowledge\knowledge_engineering
 .\.venv\Scripts\python -m graphify .
 ```
 
 如果 `graphify` 已在 PATH 中：
 
 ```powershell
-cd D:\kan\kan\Python\knowledge_engineering
+cd C:\Workspace\10.it\30.knowledge\knowledge_engineering
 graphify .
 ```
 
@@ -182,14 +182,14 @@ ANTHROPIC_API_KEY=your-key
 ### 命令行方式
 
 ```powershell
-cd D:\kan\kan\Python\knowledge_engineering
+cd C:\Workspace\10.it\30.knowledge\knowledge_engineering
 .\.venv\Scripts\python -m graphify .
 ```
 
 如果使用全局命令：
 
 ```powershell
-cd D:\kan\kan\Python\knowledge_engineering
+cd C:\Workspace\10.it\30.knowledge\knowledge_engineering
 graphify .
 ```
 
@@ -204,7 +204,7 @@ graphify .
 这会对当前仓库建图。若工作区里打开了多个仓库，建议先明确路径：
 
 ```text
-/graphify D:\kan\kan\Python\knowledge_engineering
+/graphify C:\Workspace\10.it\30.knowledge\knowledge_engineering
 ```
 
 ---
@@ -214,7 +214,7 @@ graphify .
 Graphify 建图命令默认会在扫描根目录下生成 `graphify-out/`。例如在 `knowledge_engineering` 根目录执行后，默认产物是：
 
 ```text
-D:\kan\kan\Python\knowledge_engineering\graphify-out\
+C:\Workspace\10.it\30.knowledge\knowledge_engineering\graphify-out\
 ```
 
 常见输出：
@@ -232,7 +232,7 @@ D:\kan\kan\Python\knowledge_engineering\graphify-out\
 打开可视化：
 
 ```text
-D:\kan\kan\Python\knowledge_engineering\graphify-out\graph.html
+C:\Workspace\10.it\30.knowledge\knowledge_engineering\graphify-out\graph.html
 ```
 
 建议用系统浏览器打开，不要用 Cursor 窄窗口预览大图。
@@ -297,7 +297,7 @@ graphify .
 命令行：
 
 ```powershell
-cd D:\kan\kan\Python\knowledge_engineering
+cd C:\Workspace\10.it\30.knowledge\knowledge_engineering
 graphify query "code-review-graph 和 Graphify 的区别是什么？"
 graphify query "图谱生成流程" --budget 1500
 graphify path "code-review-graph" "Graphify"

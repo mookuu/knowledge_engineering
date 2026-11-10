@@ -170,17 +170,17 @@ watch -n2 "grep -c ^processor /proc/cpuinfo; echo '---'; grep 'cpu MHz' /proc/cp
 
 | 目标路径 | 模板文件 |
 |---------|---------|
-| `C:\Users\kalifun\.wslconfig` | `resource/memo/_dot_wslconfig` |
-| `/etc/wsl.conf` | `resource/memo/_etc_wsl_conf` |
+| `C:\Users\kalifun\.wslconfig` | `tool_setting/_dot_wslconfig` |
+| `/etc/wsl.conf` | `tool_setting/_etc_wsl_conf` |
 
 在普通 WSL 终端中执行：
 ```bash
 # 1. 部署 .wslconfig
-cp /mnt/c/Workspace/program/PythonBasic/resource/memo/_dot_wslconfig \
+cp /mnt/c/Workspace/10.it/30.knowledge/knowledge_engineering/tool_setting/_dot_wslconfig \
    /mnt/c/Users/kalifun/.wslconfig
 
 # 2. 部署 /etc/wsl.conf
-sudo cp /mnt/c/Workspace/program/PythonBasic/resource/memo/_etc_wsl_conf \
+sudo cp /mnt/c/Workspace/10.it/30.knowledge/knowledge_engineering/tool_setting/_etc_wsl_conf \
         /etc/wsl.conf
 
 # 3. 应用 sysctl 调优

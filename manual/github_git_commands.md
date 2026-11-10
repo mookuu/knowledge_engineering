@@ -188,17 +188,17 @@ git push origin main
 
 ---
 
-## 十一、本机多仓库工作区（Python）
+## 十一、本机多仓库工作区（Windows）
 
-工作区 `PythonBasic.code-workspace` 含多个**独立 Git 根**（各自 `git pull` / `push`）：
+工作区 `C:\Workspace\10.it\m1.code-workspace` 含多个**独立 Git 根**（各自 `git pull` / `push`）：
 
 | 本地路径 | 远端仓库 |
 |----------|----------|
-| `D:\kan\kan\Python\AiBasic` | AiBasic |
-| `D:\kan\kan\Python\PythonBasic` | PythonBasic |
-| `D:\kan\kan\Python\knowledge_engineering` | knowledge_engineering |
-| `D:\kan\kan\Python\learning_log` | learning_log |
-| `D:\kan\kan\Python\mind-sync` | mind-sync（按需单独操作） |
+| `C:\Workspace\10.it\10.basic\Java` | JavaBasic |
+| `C:\Workspace\10.it\10.basic\Python` | PythonBasic |
+| `C:\Workspace\10.it\20.system\AI` | AI |
+| `C:\Workspace\10.it\30.knowledge\knowledge_engineering` | knowledge_engineering |
+| `C:\Workspace\10.it\40.product\mind-sync` | mind-sync（按需单独操作） |
 
 | 你说 | 通常操作 |
 |------|----------|

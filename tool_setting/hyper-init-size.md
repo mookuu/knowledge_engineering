@@ -7,7 +7,7 @@
 ## 目标
 
 1. **窗口初始大小**：启动时窗口为合适的像素大小（由 `config.json` 自动保存）
-2. **初始目录**：默认为 `C:\Workspace\program`
+2. **初始目录**：默认为 `C:\Workspace\10.it`
 3. **分屏继承**：分屏（split pane）时也初始为该目录
 
 ## 推理过程
@@ -44,26 +44,26 @@ Hyper 的 shell 是 `C:\Windows\System32\wsl.exe`，默认 `shellArgs: ['~']` �
 `workingDirectory` 对 WSL **无效**，因为 WSL 有自己的独立文件系统。WSL 命令行参数 `--cd` 可以设置 WSL 启动的初始目录：
 
 ```bash
-wsl --cd "C:\Workspace\program"
+wsl --cd "C:\Workspace\10.it"
 ```
 
-这样进入 WSL 后 `pwd` 就是 `/mnt/c/Workspace/program`。
+这样进入 WSL 后 `pwd` 就是 `/mnt/c/Workspace/10.it`。
 
 #### 验证 `wsl --cd` 可用性
 
 ```powershell
-wsl --cd "C:\Workspace\program" -e pwd
-# 输出：/mnt/c/Workspace/program
+wsl --cd "C:\Workspace\10.it" -e pwd
+# 输出：/mnt/c/Workspace/10.it
 ```
 
-所以方案是将 `shellArgs` 从 `['~']` 改为 `['--cd', 'C:\\Workspace\\program']`。
+所以方案是将 `shellArgs` 从 `['~']` 改为 `['--cd', 'C:\\Workspace\\10.it']`。
 
 ### 3. 分屏继承：preserveCWD
 
 Hyper 已有 `preserveCWD: true` 配置项，其行为是：
 
 - **分屏时**：新 pane 继承当前 pane 的工作目录（即 `wsl --cd <当前目录>`）
-- **新标签页时**：使用默认 `shellArgs` 启动（即 `wsl --cd "C:\Workspace\program"`）
+- **新标签页时**：使用默认 `shellArgs` 启动（即 `wsl --cd "C:\Workspace\10.it"`）
 
 因此只要启动时进入了正确目录，分屏就会自动继承，无需额外配置。
 
@@ -90,7 +90,7 @@ Hyper 已有 `preserveCWD: true` 配置项，其行为是：
 
 ```diff
 -         shellArgs: ['~'],
-+         shellArgs: ['--cd', 'C:\\Workspace\\program'],
++         shellArgs: ['--cd', 'C:\\Workspace\\10.it'],
 ```
 
 ### 最终配置
@@ -101,9 +101,9 @@ config: {
     // window initial size — 注释掉，由 config.json 的像素值控制
     // windowSize: [140, 45],
 
-    workingDirectory: 'C:\\Workspace\\program',
+    workingDirectory: 'C:\\Workspace\\10.it',
     shell: 'C:\\Windows\\System32\\wsl.exe',
-    shellArgs: ['--cd', 'C:\\Workspace\\program'],
+    shellArgs: ['--cd', 'C:\\Workspace\\10.it'],
     preserveCWD: true,
 }
 ```
@@ -127,14 +127,14 @@ Select-String -Path "$env:APPDATA\Hyper\.hyper.js" -Pattern 'windowSize|workingD
 
 ```
         // windowSize: [140, 45],
-        workingDirectory: 'C:\Workspace\program',
-        shellArgs: ['--cd', 'C:\Workspace\program'],
+        workingDirectory: 'C:\Workspace\10.it',
+        shellArgs: ['--cd', 'C:\Workspace\10.it'],
         preserveCWD: true,
 ```
 
 ### 验证 WSL 初始目录
 
 ```powershell
-wsl --cd "C:\Workspace\program" -e pwd
-# 应输出：/mnt/c/Workspace/program
+wsl --cd "C:\Workspace\10.it" -e pwd
+# 应输出：/mnt/c/Workspace/10.it
 ```

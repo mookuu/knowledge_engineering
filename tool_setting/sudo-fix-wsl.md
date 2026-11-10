@@ -82,7 +82,7 @@ wsl
 
 ## 预防性备份
 
-备份文件已迁移至 `tool_setting/sudo-backup/`（原位于 `PythonBasic/.reasonix/sudo-backup/`），包含：
+备份文件已迁移至 `tool_setting/sudo-backup/`（原位于 Python 项目的 `.reasonix/sudo-backup/`），包含：
 
 - `sudo_binary.bin` — sudo 可执行文件副本
 - `sudo_binary_perm.txt` — `4755 65534 65534`（mode uid gid）

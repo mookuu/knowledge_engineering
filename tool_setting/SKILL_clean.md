@@ -11,7 +11,7 @@ description: "WSL/Windows 跨环境开发约束指南。当 Codex 需要在 WSL�
 
 ### 1. 可写目录与旧版 flag 变更
 
-**历史**：`~/.zshrc` 中 codex alias 曾用 `--writable-roots /mnt/c/Workspace/program`，该 flag 从 Codex v0.136.0 起被移除。替代选项：
+**历史**：`~/.zshrc` 中 codex alias 曾用 `--writable-roots` 指定项目根目录（现为 `/mnt/c/Workspace/10.it`），该 flag 从 Codex v0.136.0 起被移除。替代选项：
 
 - `--add-dir <DIR>` — sandbox 模式下添加额外可写目录
 - `-s workspace-write` — sandbox 模式级别
@@ -19,12 +19,12 @@ description: "WSL/Windows 跨环境开发约束指南。当 Codex 需要在 WSL�
 
 当前 alias 已更新为：
 ```
-alias codex="codex --add-dir /mnt/c/Workspace/program -a never"
+alias codex="codex --add-dir /mnt/c/Workspace/10.it -a never"
 ```
 
 ### 2. `/mnt/c` 写权限判定
 
-能否直接用文件工具写入 `/mnt/c` 下的路径，取决于 **sandbox_permissions 配置**。当前配置已将 `/mnt/c/Workspace/program` 列为可写根目录，所以文件工具（如 `apply_patch`、`cat >`）可以直接写入该目录下的文件。
+能否直接用文件工具写入 `/mnt/c` 下的路径，取决于 **sandbox_permissions 配置**。当前配置已将 `/mnt/c/Workspace/10.it` 列为可写根目录，所以文件工具（如 `apply_patch`、`cat >`）可以直接写入该目录下的文件。
 
 **如果目标目录不在可写根目录列表中**，依然需要用 `require_escalated` 配合 PowerShell 写入。`--unshare-net` 阻断 vsock 导致 sandbox 内无法直接调用 `powershell.exe`，必须提权。
 

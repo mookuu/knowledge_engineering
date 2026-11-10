@@ -452,7 +452,7 @@ SESSION_COOKIE_SECURE = False   # 本地 http 调试
 
 ### 6.6 工程化落地记录（AiBasic）
 
-> 已在 `D:\kan\kan\Python\AiBasic\django_learn_demo` 工程化实现，本文档内容保留用于学习说明。
+> 已在 `C:\Workspace\10.it\20.system\AI\django_learn_demo` 工程化实现，本文档内容保留用于学习说明。
 
 
 | 落地项    | 文件路径                                               | 说明                                                 |
@@ -529,7 +529,7 @@ SESSION_COOKIE_SECURE = False   # 本地 http 调试
 
 ### 7.6 工程化落地记录（AiBasic）
 
-> 已在 `D:\kan\kan\Python\AiBasic\django_learn_demo` 增加 `drf_jwt_demo` 示例工程。
+> 已在 `C:\Workspace\10.it\20.system\AI\django_learn_demo` 增加 `drf_jwt_demo` 示例工程。
 
 
 | 落地项            | 文件路径                                            | 说明                                                       |
@@ -559,7 +559,7 @@ SESSION_COOKIE_SECURE = False   # 本地 http 调试
 
 | 步骤  | 命令 / 动作                                          | 预期结果                                                              |
 | --- | ------------------------------------------------ | ----------------------------------------------------------------- |
-| 1   | `cd D:\kan\kan\Python\AiBasic\django_learn_demo` | 进入工程目录                                                            |
+| 1   | `cd C:\Workspace\10.it\20.system\AI\django_learn_demo` | 进入工程目录                                                            |
 | 2   | `python -m pip install -r requirements.txt`      | 安装 DRF 与 SimpleJWT 依赖                                             |
 | 3   | `python manage.py runserver`                     | Django 服务启动                                                       |
 | 4   | 打开 `http://127.0.0.1:8000/drf-jwt-demo/`         | 可见对照演示页面                                                          |
@@ -570,7 +570,7 @@ SESSION_COOKIE_SECURE = False   # 本地 http 调试
 
 ## 8) `django_learn_demo` 笔记应用（`notes`）串联说明
 
-> 以下示例均来自 `D:\kan\kan\Python\AiBasic\django_learn_demo\notes\`，用于把 Cookie / CSRF / 表单 / 重定向串成一条可读链路。
+> 以下示例均来自 `C:\Workspace\10.it\20.system\AI\django_learn_demo\notes\`，用于把 Cookie / CSRF / 表单 / 重定向串成一条可读链路。
 
 ### 8.1 路由命名与 `reverse`
 

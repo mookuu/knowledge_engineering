@@ -4,11 +4,11 @@
 # 在**普通 WSL 终端**中执行以下操作即可部署。
 
 ## 1. 部署 .wslconfig（Windows 侧）
-cp /mnt/c/Workspace/program/PythonBasic/resource/memo/_dot_wslconfig \
+cp /mnt/c/Workspace/10.it/30.knowledge/knowledge_engineering/tool_setting/_dot_wslconfig \
    /mnt/c/Users/kalifun/.wslconfig
 
 ## 2. 部署 /etc/wsl.conf（WSL 内）
-sudo cp /mnt/c/Workspace/program/PythonBasic/resource/memo/_etc_wsl_conf \
+sudo cp /mnt/c/Workspace/10.it/30.knowledge/knowledge_engineering/tool_setting/_etc_wsl_conf \
         /etc/wsl.conf
 
 ## 3. 应用 sysctl 调优

@@ -2,13 +2,15 @@
 # 部署 WSL 优化配置 — 由 agent 调用（绕过 bwrap 沙箱）
 set -e
 
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
 # 1. .wslconfig → Windows 用户目录
-cp /mnt/c/Workspace/program/PythonBasic/resource/memo/_dot_wslconfig \
+cp "$SCRIPT_DIR/_dot_wslconfig" \
    /mnt/c/Users/moku/.wslconfig
 echo "[OK] .wslconfig"
 
 # 2. /etc/wsl.conf
-cp /mnt/c/Workspace/program/PythonBasic/resource/memo/_etc_wsl_conf \
+cp "$SCRIPT_DIR/_etc_wsl_conf" \
    /etc/wsl.conf
 echo "[OK] /etc/wsl.conf"
 
