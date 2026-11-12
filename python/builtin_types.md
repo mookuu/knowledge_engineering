@@ -7,7 +7,7 @@
 + `int` — 整数，任意精度，如 `42`, `-7`, `0xff`
 + `float` — 浮点数（双精度），如 `3.14`, `1e-5`
 + `complex` — 复数，如 `3+4j`，`.real` 取实部，`.imag` 取虚部
-+ `bool` — 布尔值，`True` / `False`，是 `int` 的子类（True==1, False==0）
++ `bool` — 布尔值，`True` / `False`，是 `int` 的子类（True:1, False:0）
 
 #### 序列类型 Sequence Types
 

@@ -191,6 +191,26 @@
 **Q6. Mermaid 图不显示。**
 确认代码块语言写成 `mermaid`（不是 `mermaidjs`），且用的是 MPE 预览。
 
+**Q7. 打开 md 就报 `command 'markdown-preview-enhanced.openPreviewToTheSide' not found`。**
+不是没装，也不是插件坏了——窗口进了**受限模式（Restricted Mode）**。MPE 0.8.40 的 `package.json` 里没有
+`capabilities.untrustedWorkspaces` 声明，受限模式下会被**整体禁用**，命令根本没注册，所以报「命令不存在」而不是「未安装」。
+
+判定（三条同时成立就是它）：
+
+- 左下角状态栏有「受限模式」字样；
+- `Ctrl+K` `V`、`Ctrl+Alt+T`、`Ctrl+Alt+C`、`Ctrl+Alt+U` **一起**失灵（Markdown All in One 同样没声明）；
+- 而 markdownlint（声明了 `untrustedWorkspaces: limited`）、Prettier、主题类插件照常工作。
+
+修复：点状态栏「受限模式」→ **管理工作区信任** → 信任该工作区；或 `Ctrl+Shift+P` → **工作区信任: 管理受信任文件夹和设置**，
+把工作区里的**每个**文件夹都加进受信任列表。之后 `Ctrl+Shift+P` → **Reload Window**。
+
+> 多根工作区**只要有一个文件夹没被信任，整窗就是受限的**。本例 2026-11-11 01:09 把
+> `../30.knowledge/knowledge_engineering` 加进 `10.basic.code-workspace`，该文件夹此前没信任过，
+> 于是整个工程降级为受限模式，MPE 随之被卸载出该窗口（日志里 MPE 在 01:06 还激活过，01:09 重启扩展宿主后就不再加载）。
+
+不想信任那份文档目录时，另一条路是**拆开用**：`10.basic.code-workspace` 只留 Java + Python，
+写文档时单独用窗口打开 `30.knowledge\knowledge_engineering`。
+
 ---
 
 ## 参考链接
