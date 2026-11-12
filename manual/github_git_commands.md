@@ -225,6 +225,61 @@ git -c http.postBuffer=524288000 push -u origin HEAD
 
 失败后执行 `git status -sb` 确认本地是否已提交、是否领先远端。
 
+### 12.1 直连超时：`Failed to connect to github.com:443`
+
+本机直连 GitHub 常不通，约 21 秒后报：
+
+```
+fatal: unable to access 'https://github.com/mookuu/PythonBasic.git/':
+Failed to connect to github.com:443 after 21085 ms: Could not connect to server
+```
+
+先分别验证「直连」与「本机代理」（本机代理端口是 **7897**，7890 不通）：
+
+```bash
+timeout 20 curl -sS -o /dev/null -w 'direct:%{http_code} %{time_total}s\n' https://github.com
+timeout 20 curl -sS -x http://127.0.0.1:7897 -o /dev/null -w 'proxy:%{http_code}\n' https://github.com
+```
+
+直连 `000`、代理 `200` → 推送时临时挂代理（只对本次命令生效）：
+
+```bash
+git -c http.proxy=http://127.0.0.1:7897 push origin <branch>
+```
+
+若接着报 `could not read Username for 'https://github.com'` 或
+`git: 'credential-manager' is not a git command`，说明 git 找不到凭证管理器，
+把 Git Credential Manager 目录加进 PATH 再推：
+
+```bash
+export PATH="/c/Program Files/Git/mingw64/bin:$PATH"
+GIT_TERMINAL_PROMPT=0 git -c http.proxy=http://127.0.0.1:7897 -c credential.helper=manager push origin <branch>
+```
+
+成功输出形如 `53eca1c..160a092  master -> master`，之后 `git status -sb` 不再显示 `[ahead 1]`。
+
+> 不建议 `git config --global http.proxy ...`：代理一关，所有仓库的 git 操作都会失败。
+> 需要长期生效时再临时加上，用完 `git config --global --unset http.proxy` 撤掉。
+
+### 12.2 `git diff` 整篇都变：多半是换行符
+
+git 里存的是 LF，而 Windows 编辑器保存可能写成 CRLF，于是 `git diff` 显示整文件重写。
+先确认差异性质：
+
+```bash
+git diff --ignore-cr-at-eol --stat     # 若缩成几行，说明差异全是行尾
+```
+
+确认后把工作区文件转回 LF（保留内容）再提交，避免历史里出现整篇重排的提交：
+
+```python
+b = open(path, 'rb').read()
+open(path, 'wb').write(b.replace(b'\r\n', b'\n'))
+```
+
+想长期固定：仓库加 `.gitattributes`（`* text=auto eol=crlf` + `*.sh text eol=lf`）并
+`git add --renormalize .`（仓库存 LF、本机检出 CRLF），或在 VS Code 里设 `"files.eol": "\n"`。
+
 ---
 
 ## 十三、在 Cursor / VS Code 里操作
