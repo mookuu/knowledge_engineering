@@ -280,6 +280,34 @@ open(path, 'wb').write(b.replace(b'\r\n', b'\n'))
 想长期固定：仓库加 `.gitattributes`（`* text=auto eol=crlf` + `*.sh text eol=lf`）并
 `git add --renormalize .`（仓库存 LF、本机检出 CRLF），或在 VS Code 里设 `"files.eol": "\n"`。
 
+#### 12.2.1 已落地（2026-11-13，C:\Workspace\10.it 全仓）
+
+Java、Python、AI、knowledge_engineering、mind-sync 五个仓库都已加 `.gitattributes`：
+
+```gitattributes
+* text=auto eol=crlf
+
+*.sh *.bash Makefile makefile *.mk Dockerfile *.dockerfile docker-compose*.yml text eol=lf
+*.png binary
+# 其余常见二进制类型同理
+```
+
+提交信息统一为 `chore: 统一换行符（仓库存 LF，检出 CRLF）`。效果：仓库里是 LF，本机检出是 CRLF。
+
+两个 git 行为要知道（git 2.56.0.windows.4.niugit 上实测）：
+
+1. `git checkout-index -a -f` 对 stat 与索引一致的文件**不会重写**，所以不转 CRLF。需要先 `git ls-files -z | xargs -0 touch` 再 checkout。
+2. 转成 CRLF 后 `git status` 可能残留假的 ` M`，此时 `git diff` 为空、`git hash-object --path=<f> <f>` 与 `HEAD:<f>` 一致。
+   再跑一次 `git add --renormalize .` 即可清掉（内容不进入暂存区）。
+
+验证命令：
+
+```bash
+git ls-files --eol | head          # i/lf  w/crlf 表示转换生效
+git status --porcelain             # 应为空（未跟踪文件除外）
+```
+
+
 ---
 
 ## 十三、在 Cursor / VS Code 里操作
