@@ -95,6 +95,7 @@
 | `Ctrl+Alt+T`    | 插入表格（MPE 表格构建器） |
 | `Ctrl+Alt+U`    | 更新目录（TOC）       |
 | `Ctrl+K` `V`    | 强制走 MPE 的侧边预览（避免和内置预览抢键） |
+| `Ctrl+Alt+\`   | 一键开关 Copilot 内联补全（全局；与 Markdown 无关，顺带记在这里） |
 
 源码（可直接粘到 `keybindings.json`）：
 
@@ -120,6 +121,10 @@
     "key": "ctrl+alt+u",
     "command": "markdown.extension.toc.update",
     "when": "editorTextFocus && editorLangId == markdown"
+  },
+  {
+    "key": "ctrl+alt+\\",
+    "command": "github.copilot.chat.completions.toggle"
   }
 ]
 ```
@@ -213,8 +218,84 @@
 
 ---
 
+## 八、Copilot 内联补全：建议气泡从哪来、怎么关
+
+编辑时自动弹的不是 DeepSeek 扩展的，而是 VS Code **内置的 GitHub Copilot Chat**（本机 `copilot-chat` 0.74.x）。
+`vizards.deepseek-v4-for-copilot` 只把 DeepSeek 注册成 **Chat 模型**（BYOK），对补全没有任何控制权。
+
+两类弹窗：
+
+| 类型 | 样子 | 默认 |
+| --- | --- | --- |
+| 内联补全（ghost text） | 光标后灰字，`Tab` 接受 | 开（`markdown`、`plaintext` 默认关） |
+| NES（Next Edit Suggestions） | 编辑器里的差异气泡 / 侧栏，会改多处甚至远处代码 | 开，`eagerness: auto` |
+
+### 8.1 快捷键（默认，不用配置）
+
+| 操作 | 按键 | 命令 ID |
+| --- | --- | --- |
+| 接受当前建议 | `Tab` | `editor.action.inlineSuggest.commit` |
+| 关闭当前建议 | `Esc` | `editor.action.inlineSuggest.hide` |
+| 下一条 / 上一条 | `Alt+]` / `Alt+[` | `editor.action.inlineSuggest.showNext` / `showPrevious` |
+| 手动触发（自动关了也能用） | `Alt+\` | `editor.action.inlineSuggest.trigger` |
+| 一键开 / 关补全 | `Ctrl+Alt+\`（本机绑定） | `github.copilot.chat.completions.toggle` |
+
+> `Ctrl+Alt+\` 是本机新增的绑定，写在 `keybindings.json` 末尾；命令本身没有默认键。
+
+### 8.2 关键设置（括号内为默认值）
+
+| 设置项 | 默认 | 作用 |
+| --- | --- | --- |
+| `editor.inlineSuggest.enabled` | `true` | 总开关，关掉后 ghost text 和 NES 全没 |
+| `editor.inlineSuggest.showToolbar` | `"onHover"` | 气泡上的浮动按钮条，`never` 更干净 |
+| `editor.inlineSuggest.suppressSuggestions` | `false` | 内联建议显示时是否压住普通补全列表 |
+| `editor.inlineSuggest.minShowDelay` | `0` | 弹出前最短延迟（毫秒） |
+| `github.copilot.enable` | `{"*":true,"markdown":false,"plaintext":false}` | 按语言控制自动触发，关掉后仍可 `Alt+\` 手动 |
+| `github.copilot.nextEditSuggestions.enabled` | `true` | NES 开关 |
+| `github.copilot.nextEditSuggestions.eagerness` | `"auto"` | `auto` / `low` / `medium` / `high`，越低越少弹 |
+| `github.copilot.nextEditSuggestions.extendedRange` | `true` | 允许 NES 改远处代码 |
+| `github.copilot.nextEditSuggestions.fixes` | `true` | 用 NES 提供诊断修复 |
+| `github.copilot.chat.inlineEdits.triggerOnEditorChangeAfterSeconds` | `10` | 编辑停顿多少秒后触发内联编辑 |
+| `github.copilot.renameSuggestions.triggerAutomatically` | `true` | 自动重命名建议 |
+
+### 8.3 三档配置
+
+```jsonc
+// A. 少打扰：还弹，但更克制（本机 2026-11-15 采用）
+"github.copilot.nextEditSuggestions.eagerness": "low",
+"editor.inlineSuggest.showToolbar": "never",
+
+// B. 只手动：不自动弹，需要时 Alt+\ 触发
+"github.copilot.enable": { "*": false },
+"github.copilot.nextEditSuggestions.enabled": false,
+
+// C. 全关：彻底不要 AI 建议
+"editor.inlineSuggest.enabled": false
+```
+
+保存即生效，无需重启；改 `keybindings.json` 也不需要重启。
+
+### 8.4 计费与模型（常见误解）
+
+| 问题 | 答案 |
+| --- | --- |
+| 补全要 token 吗？ | 要，但算的是 **Copilot 订阅额度**（免费版约每月 2000 次补全、50 条对话），不按 token 给你计费 |
+| 和 DeepSeek 的 token 一样吗？ | 不一样。DeepSeek BYOK 按 **输入 / 输出 token** 计费，且**只作用于 Chat / Agent** |
+| 能把补全换成 DeepSeek 吗？ | 不能。补全固定走 Copilot 专用快模型；BYOK 只出现在 Chat 的模型下拉里 |
+| Copilot 是一个模型吗？ | 不是。Copilot 是产品：补全用专用小模型，Chat 可选 GPT / Claude / Gemini，BYOK 再叠加第三方 |
+
+对应日志特征：`BYOK bridge changed; refreshing models` —— 说明 DeepSeek 是作为第三方模型接入 Copilot Chat 的。
+
+参考：[Copilot 套餐](https://docs.github.com/en/copilot/about-github-copilot/plans-for-github-copilot)、
+[VS Code 自定义模型（BYOK）](https://code.visualstudio.com/docs/copilot/customization/language-models)、
+[NES 说明](https://code.visualstudio.com/blogs/2025/02/12/next-edit-suggestions)。
+
+---
+
 ## 参考链接
 
 - [Markdown Preview Enhanced 文档](https://shd101wyy.github.io/markdown-preview-enhanced/)
 - [Markdown All in One](https://marketplace.visualstudio.com/items?itemName=yzhang.markdown-all-in-one)
 - [VS Code 键盘快捷方式文档](https://code.visualstudio.com/docs/configure/keybindings)
+- [GitHub Copilot 快捷键（Windows）](https://docs.github.com/en/copilot/reference/keyboard-shortcuts)
+- [Copilot 内联建议（NES）博客](https://code.visualstudio.com/blogs/2025/02/12/next-edit-suggestions)
