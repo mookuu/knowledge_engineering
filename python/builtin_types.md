@@ -24,6 +24,10 @@
 + `range` — 不可变的整数等差序列
   + `range(stop)`, `range(start, stop)`, `range(start, stop, step)`
   + 惰性求值，不实际存储所有元素
++ `array` — 数组
+  + 可变
+  + 支持索引、切片、拼接和重复
+  + array.array:元素类型受限,初始化时通过类型码指定(如"d")
 
 #### 二进制序列 Binary Sequence Types
 
